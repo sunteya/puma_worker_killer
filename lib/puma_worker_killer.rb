@@ -7,7 +7,7 @@ module PumaWorkerKiller
 
   attr_accessor :ram, :frequency, :percent_usage, :rolling_restart_frequency,
                 :rolling_restart_splay_seconds,
-                :reaper_status_logs, :pre_term, :rolling_pre_term, :on_calculation
+                :reaper_status_logs, :pre_term, :rolling_pre_term, :on_calculation, :requests_count
 
   self.ram           = 512  # mb
   self.frequency     = 10   # seconds
@@ -18,6 +18,7 @@ module PumaWorkerKiller
   self.pre_term = nil
   self.rolling_pre_term = nil
   self.on_calculation = nil
+  self.requests_count = 10000
 
   def config
     yield self
@@ -38,6 +39,10 @@ module PumaWorkerKiller
     frequency += rand(splay_seconds)
     AutoReap.new(frequency, RollingRestart.new(nil, rolling_pre_term)).start
   end
+
+  def restart_after_requests_count(requests_count = self.requests_count, frequency = self.frequency)
+    AutoReap.new(frequency, RequestsCountReaper.new(requests_count)).start
+  end
 end
 
 require 'puma_worker_killer/puma_memory'
@@ -45,3 +50,5 @@ require 'puma_worker_killer/reaper'
 require 'puma_worker_killer/rolling_restart'
 require 'puma_worker_killer/auto_reap'
 require 'puma_worker_killer/version'
+require 'puma_worker_killer/requests_count_reaper'
+require 'puma_worker_killer/puma_requests_count'
